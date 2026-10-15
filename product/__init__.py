@@ -46,6 +46,7 @@ def create_app(config_name: str | None = None) -> flask.Flask:
         static_folder="../static",
     )
     app.config.from_object(config[config_name])
+    _ensure_sqlite_folder(app)
 
     _init_extensions(app)
     _register_request_hooks(app)
@@ -65,6 +66,23 @@ def create_app(config_name: str | None = None) -> flask.Flask:
     app.register_blueprint(reports.bp)  # /reports     reports + CSV
 
     return app
+
+
+def _ensure_sqlite_folder(app: flask.Flask) -> None:
+    """Create the folder a file-backed SQLite database will live in.
+
+    ``instance/`` holds git-ignored data files, so a fresh clone (or a zip
+    download) does not contain it — and SQLite refuses to create its database
+    file when the parent folder is missing, which would break the very first
+    ``flask db upgrade``.  In-memory databases and external URLs are left
+    alone.
+    """
+    uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if not uri.startswith("sqlite:///"):
+        return
+    folder = os.path.dirname(uri.removeprefix("sqlite:///"))
+    if folder:
+        os.makedirs(folder, exist_ok=True)
 
 
 def _init_extensions(app: flask.Flask) -> None:
