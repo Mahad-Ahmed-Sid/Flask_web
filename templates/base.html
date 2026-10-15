@@ -5,15 +5,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>{% block title %}Product Inventory{% endblock %}</title>
+    <title>{% block title %}Inventory Management{% endblock %}</title>
 
     <meta name="description"
-        content="{% block meta_description %}A small Flask + SQLAlchemy inventory app for tracking products, prices and descriptions.{% endblock %}">
+        content="{% block meta_description %}A multi-user Flask + SQLAlchemy inventory system for tracking products, stock levels and value.{% endblock %}">
 
-    <meta property="og:title" content="{% block og_title %}Product Inventory{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Inventory Management{% endblock %}">
     <meta property="og:type" content="website">
     <meta property="og:description"
-        content="{% block og_description %}A small Flask + SQLAlchemy inventory app for tracking products, prices and descriptions.{% endblock %}">
+        content="{% block og_description %}A multi-user Flask + SQLAlchemy inventory system for tracking products, stock levels and value.{% endblock %}">
 
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
 
@@ -25,73 +25,160 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
-<body class="d-flex flex-column min-vh-100">
+<body class="app-body">
 
-    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-semibold" href="{{ url_for('product.index') }}">
-                <span class="brand-mark" aria-hidden="true">▦</span>
-                Product Inventory
-            </a>
+    {# ------------------------------------------------------------------ #}
+    {# Mobile-only bar: the sidebar is a slide-in offcanvas below lg      #}
+    {# ------------------------------------------------------------------ #}
+    <header class="app-topbar d-lg-none">
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="offcanvas"
+            data-bs-target="#appSidebar" aria-controls="appSidebar" aria-label="Open navigation menu">
+            <span aria-hidden="true">☰</span>
+        </button>
+        <a class="app-topbar-brand fw-semibold" href="{{ url_for('dashboard.index') }}">
+            <span class="brand-mark" aria-hidden="true">▦</span>
+            Inventory
+        </a>
+    </header>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <div class="app-shell">
 
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'product.index' }}"
-                            href="{{ url_for('product.index') }}">Inventory</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('product.index') }}#add-product">Add product</a>
-                    </li>
-                </ul>
+        {# ---------------------------------------------------------------- #}
+        {# Sidebar: static at lg and up, offcanvas below                      #}
+        {# ---------------------------------------------------------------- #}
+        <aside class="offcanvas offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" id="appSidebar"
+            aria-label="Main navigation">
 
-                <form class="d-flex" role="search" action="{{ url_for('product.index') }}" method="get">
-                    <label class="visually-hidden" for="navbarSearch">Search products</label>
-                    <input class="form-control me-2" type="search" id="navbarSearch" name="q"
-                        value="{{ current_query }}" placeholder="Search products…" aria-label="Search">
-                    <button class="btn btn-outline-success" type="submit">Search</button>
+            <div class="offcanvas-header d-lg-none">
+                <span class="fw-semibold"><span class="brand-mark" aria-hidden="true">▦</span> Inventory</span>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+
+            <div class="offcanvas-body d-flex flex-column p-0">
+                {# The panel carries the sidebar's own surface: Bootstrap
+                   forces .offcanvas-lg .offcanvas-body to be transparent
+                   once it goes static, so the background has to live here. #}
+                <div class="app-sidebar-panel d-flex flex-column flex-grow-1">
+                    <a class="app-brand d-none d-lg-flex align-items-center gap-2 px-3 py-3"
+                        href="{{ url_for('dashboard.index') }}">
+                        <span class="brand-mark fs-5" aria-hidden="true">▦</span>
+                        <span class="fw-semibold">
+                            Inventory
+                            <span class="app-brand-sub">Management</span>
+                        </span>
+                    </a>
+
+                    <nav class="app-nav px-2 flex-grow-1" aria-label="Main">
+                    <ul class="nav flex-column gap-1">
+
+                        <li class="nav-item">
+                            <a class="app-nav-link {{ 'active' if request.blueprint == 'dashboard' }}"
+                                href="{{ url_for('dashboard.index') }}"
+                                {{ 'aria-current=page' if request.blueprint == 'dashboard' }}>
+                                <span class="app-nav-icon" aria-hidden="true">◉</span>
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="app-nav-link {{ 'active' if request.blueprint == 'product' }}"
+                                href="{{ url_for('product.index') }}"
+                                {{ 'aria-current=page' if request.blueprint == 'product' }}>
+                                <span class="app-nav-icon" aria-hidden="true">▦</span>
+                                Inventory
+                                {% if low_stock_count %}
+                                <span class="badge text-bg-warning app-nav-badge"
+                                    title="{{ low_stock_count }} product(s) need restocking">
+                                    {{ low_stock_count }}
+                                </span>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="app-nav-link {{ 'active' if request.blueprint == 'categories' }}"
+                                href="{{ url_for('categories.index') }}"
+                                {{ 'aria-current=page' if request.blueprint == 'categories' }}>
+                                <span class="app-nav-icon" aria-hidden="true">❏</span>
+                                Categories
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="app-nav-link {{ 'active' if request.blueprint == 'reports' }}"
+                                href="{{ url_for('reports.index') }}"
+                                {{ 'aria-current=page' if request.blueprint == 'reports' }}>
+                                <span class="app-nav-icon" aria-hidden="true">≣</span>
+                                Reports
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <form class="px-3 pb-3" role="search" action="{{ url_for('product.index') }}" method="get">
+                    <label class="visually-hidden" for="sidebarSearch">Search products</label>
+                    <div class="input-group input-group-sm">
+                        <input class="form-control" type="search" id="sidebarSearch" name="q"
+                            value="{{ current_query }}" placeholder="Search products…" aria-label="Search products">
+                        <button class="btn btn-outline-primary" type="submit">Search</button>
+                    </div>
                 </form>
-            </div>
-        </div>
-    </nav>
 
-    <main class="container py-4 flex-grow-1">
+                <div class="app-user border-top p-3">
+                    {% if current_user.is_authenticated %}
+                    <div class="fw-semibold text-truncate" title="{{ current_user.display_name }}">
+                        {{ current_user.display_name }}
+                    </div>
+                    <div class="small text-body-secondary text-truncate" title="{{ current_user.email }}">
+                        {{ current_user.email }}
+                    </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="row">
-            <div class="col">
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"
-                        aria-label="Close"></button>
+                    <div class="d-flex gap-2 mt-2">
+                        <a class="btn btn-sm btn-outline-secondary flex-grow-1 {{ 'active' if request.endpoint in ('auth.profile', 'auth.change_password') }}"
+                            href="{{ url_for('auth.profile') }}">Profile</a>
+
+                        <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Sign out</button>
+                        </form>
+                    </div>
+
+                    {% else %}
+                    <a class="btn btn-sm btn-primary w-100" href="{{ url_for('auth.login') }}">Sign in</a>
+                    {% endif %}
                 </div>
-                {% endfor %}
+                </div>
             </div>
-        </div>
-        {% endif %}
-        {% endwith %}
+        </aside>
 
-        {% block content %}{% endblock %}
-    </main>
+        {# ---------------------------------------------------------------- #}
+        {# Main column                                                       #}
+        {# ---------------------------------------------------------------- #}
+        <main class="app-main p-3 p-lg-4 flex-grow-1">
 
-    <footer class="border-top py-3 mt-auto bg-body-tertiary">
-        <div class="container d-flex flex-wrap justify-content-between gap-2">
-            <span class="text-body-secondary small">
-                Built with Flask, SQLAlchemy &amp; Bootstrap.
-            </span>
-            <span class="text-body-secondary small">
-                &copy; {{ now_year }} Product Inventory
-            </span>
-        </div>
-    </footer>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+
+            <footer class="app-footer d-flex flex-wrap justify-content-between gap-2 mt-4 pt-3">
+                <span class="text-body-secondary small">
+                    Built with Flask, SQLAlchemy &amp; Bootstrap.
+                </span>
+                <span class="text-body-secondary small">
+                    &copy; {{ now_year }} Inventory Management
+                </span>
+            </footer>
+        </main>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"

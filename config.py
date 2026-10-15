@@ -6,6 +6,7 @@ through the ``FLASK_CONFIG`` environment variable (defaults to development).
 """
 
 import os
+from datetime import timedelta
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -32,6 +33,25 @@ class BaseConfig:
     # Pagination page size used by the product list.
     PRODUCTS_PER_PAGE = 10
 
+    # Products at or below this level (and anything at 0) count as low stock.
+    # Each product may override it with its own threshold.
+    LOW_STOCK_THRESHOLD = 10
+
+    # --- Session hardening -------------------------------------------------
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_DURATION = timedelta(days=14)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
+
+    # A failed login costs the same as a successful one, so adding a small
+    # delay is the cheapest defence against password spraying.
+    LOGIN_RATE_LIMIT_SECONDS = 0.5
+
+    # Forms in this app are tiny; reject absurd uploads early.
+    MAX_CONTENT_LENGTH = 1 * 1024 * 1024  # 1 MB
+
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True
@@ -43,9 +63,17 @@ class TestingConfig(BaseConfig):
     WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
 
+    # The deliberate login delay exists to slow down password spraying; in
+    # tests it would only slow the suite down (each login would sleep).
+    LOGIN_RATE_LIMIT_SECONDS = 0
+
 
 class ProductionConfig(BaseConfig):
     DEBUG = False
+
+    # Cookies must only travel over HTTPS. Set SESSION_COOKIE_SECURE=0 if you
+    # deliberately deploy over plain HTTP (not recommended).
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "1") == "1"
 
     # SQLite default, but a real deployment should set DATABASE_URL
     # (for example postgresql://user:pass@host/dbname).

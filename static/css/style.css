@@ -112,3 +112,223 @@ body {
         animation-duration: 0.01ms !important;
     }
 }
+
+/* --- App shell (sidebar layout) --------------------------------------- */
+
+.app-body {
+    /* A tinted canvas so the white sidebar and cards read as surfaces. */
+    background-color: #f5f6fa;
+}
+
+.app-shell {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 100vh;
+}
+
+@media (min-width: 992px) {
+    .app-shell {
+        flex-wrap: nowrap;
+    }
+}
+
+/* Bootstrap makes the responsive offcanvas transparent and auto-width once
+   it goes static (with !important on the background), so the visual sidebar
+   lives on an inner panel. */
+.app-sidebar {
+    --bs-offcanvas-width: 16.5rem;
+}
+
+.app-sidebar-panel {
+    background-color: #fff;
+    border-right: 1px solid rgba(0, 0, 0, 0.075);
+}
+
+@media (min-width: 992px) {
+    .app-sidebar {
+        flex: 0 0 16.5rem !important;
+    }
+
+    .app-sidebar .offcanvas-body {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+}
+
+.app-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.075);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.app-topbar-brand {
+    color: inherit;
+    text-decoration: none;
+}
+
+.app-brand {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.app-brand-sub {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pi-muted);
+}
+
+.app-main {
+    /* Stop the flex child from forcing the whole shell wider than the
+       viewport when a table needs to scroll horizontally. */
+    min-width: 0;
+}
+
+/* --- Sidebar navigation ------------------------------------------------- */
+
+.app-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.app-nav-link:hover {
+    background-color: rgba(79, 70, 229, 0.07);
+    color: var(--pi-brand);
+}
+
+.app-nav-link.active {
+    background-color: rgba(79, 70, 229, 0.12);
+    color: var(--pi-brand);
+}
+
+.app-nav-icon {
+    width: 1.1rem;
+    text-align: center;
+    opacity: 0.75;
+}
+
+.app-nav-badge {
+    margin-left: auto;
+}
+
+.app-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.075);
+}
+
+/* --- Dashboard stat cards ------------------------------------------------ */
+
+.stat-card .stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--bs-secondary-color);
+}
+
+.stat-card .stat-value {
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-card .stat-hint {
+    font-size: 0.78rem;
+    color: var(--bs-secondary-color);
+}
+
+.stat-card.stat-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.stat-card.stat-danger {
+    border-left: 4px solid #dc3545;
+}
+
+.stat-card.stat-success {
+    border-left: 4px solid #198754;
+}
+
+/* --- Pure-CSS bar chart -------------------------------------------------- */
+
+.bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.bar-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bar-track {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-radius: 999px;
+    height: 0.65rem;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6366f1, #4f46e5);
+    /* min-width keeps a non-zero bar visible for a category with 1 unit. */
+    min-width: 3px;
+}
+
+.bar-value {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+    .bar-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .bar-track {
+        grid-column: 1 / -1;
+    }
+}
+
+/* --- Stock helpers -------------------------------------------------------- */
+
+.qty-input {
+    max-width: 9rem;
+}
+
+.stock-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.adjust-note {
+    max-width: 14rem;
+}

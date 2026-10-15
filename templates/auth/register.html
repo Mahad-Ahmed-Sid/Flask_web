@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_errors %}
+
+{% block title %}Create account · Inventory Management{% endblock %}
+
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-5">
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-1">Create your account</h1>
+                <p class="text-body-secondary small mb-4">
+                    Each account gets its own private inventory — nobody else
+                    can see or change your products.
+                </p>
+
+                <form method="post">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.display_name.label(class_="form-label") }}
+                        {{ form.display_name(class_="form-control is-invalid" if form.display_name.errors
+                                             else "form-control",
+                                             autocomplete="name",
+                                             placeholder="e.g. Alex Rahman") }}
+                        {{ field_errors(form.display_name) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.email.label(class_="form-label") }}
+                        {{ form.email(class_="form-control is-invalid" if form.email.errors
+                                      else "form-control",
+                                      type="email",
+                                      autocomplete="email",
+                                      placeholder="you@example.com") }}
+                        {{ field_errors(form.email) }}
+                        <div class="form-text">Used to sign in. Must be unique.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.password.label(class_="form-label") }}
+                        {{ form.password(class_="form-control is-invalid" if form.password.errors
+                                         else "form-control",
+                                         autocomplete="new-password") }}
+                        {{ field_errors(form.password) }}
+                        <div class="form-text">Between 8 and 128 characters.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.password_confirm.label(class_="form-label") }}
+                        {{ form.password_confirm(class_="form-control is-invalid"
+                                                 if form.password_confirm.errors
+                                                 else "form-control",
+                                                 autocomplete="new-password") }}
+                        {{ field_errors(form.password_confirm) }}
+                    </div>
+
+                    <div class="d-grid">
+                        {{ form.submit(class_="btn btn-primary") }}
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <p class="small text-center mb-0">
+                    Already have an account?
+                    <a href="{{ url_for('auth.login') }}">Sign in</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

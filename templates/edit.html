@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% from "_macros.html" import field_errors, stock_badge %}
 
-{% block title %}Edit {{ product.product_name }} · Product Inventory{% endblock %}
+{% block title %}Edit {{ product.product_name }} · Inventory Management{% endblock %}
 
 
 {% block content %}
@@ -19,11 +20,18 @@
         </nav>
 
         <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <strong>Edit product #{{ product.id }}</strong>
-                <span class="text-body-secondary small ms-2">
-                    created {{ product.date_created|friendly_date }}
-                </span>
+            <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <strong>Edit product #{{ product.id }}</strong>
+                    <span class="text-body-secondary small ms-2">
+                        created {{ product.date_created|friendly_date }}
+                    </span>
+                </div>
+
+                <a class="btn btn-sm btn-outline-secondary"
+                    href="{{ url_for('product.stock', product_id=product.id) }}">
+                    Adjust stock
+                </a>
             </div>
 
             <div class="card-body">
@@ -35,23 +43,52 @@
                         {{ form.product_name(class_="form-control is-invalid" if form.product_name.errors
                                              else "form-control",
                                              autocomplete="off") }}
-                        {% for error in form.product_name.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
+                        {{ field_errors(form.product_name) }}
                         <div class="form-text">Enter the name of the product.</div>
                     </div>
 
-                    <div class="mb-3">
-                        {{ form.price.label(class_="form-label") }}
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            {{ form.price(class_="form-control is-invalid" if form.price.errors
-                                          else "form-control",
-                                          step="0.01", min="0") }}
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            {{ form.price.label(class_="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.price(class_="form-control is-invalid" if form.price.errors
+                                              else "form-control",
+                                              step="0.01", min="0") }}
+                            </div>
+                            {{ field_errors(form.price) }}
                         </div>
-                        {% for error in form.price.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                        {% endfor %}
+
+                        <div class="col-6 mb-3">
+                            {{ form.quantity.label(class_="form-label") }}
+                            {{ form.quantity(class_="form-control is-invalid" if form.quantity.errors
+                                             else "form-control",
+                                             min="0") }}
+                            {{ field_errors(form.quantity) }}
+                            <div class="form-text">
+                                Current status: {{ stock_badge(product) }}
+                                — prefer the Stock page, which records the reason.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            {{ form.low_stock_threshold.label(class_="form-label") }}
+                            {{ form.low_stock_threshold(class_="form-control is-invalid"
+                                                        if form.low_stock_threshold.errors
+                                                        else "form-control",
+                                                        min="0") }}
+                            {{ field_errors(form.low_stock_threshold) }}
+                            <div class="form-text">Alert at or below this level.</div>
+                        </div>
+
+                        <div class="col-6 mb-3">
+                            {{ form.category_id.label(class_="form-label") }}
+                            {{ form.category_id(class_="form-select is-invalid" if form.category_id.errors
+                                                else "form-select") }}
+                            {{ field_errors(form.category_id) }}
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -60,9 +97,7 @@
                                                     if form.product_description.errors
                                                     else "form-control",
                                                     rows="4") }}
-                        {% for error in form.product_description.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
+                        {{ field_errors(form.product_description) }}
                         <div class="form-text">Optional. Maximum 200 characters.</div>
                     </div>
 

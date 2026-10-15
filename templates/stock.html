@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_errors, stock_badge %}
+
+{% block title %}Stock · {{ product.product_name }} · Inventory Management{% endblock %}
+
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('product.index') }}">Inventory</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Stock · #{{ product.id }}
+        </li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+
+    {# ------------------------------------------------------------------ #}
+    {# Current stock + adjustment form                                     #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><strong>Current stock</strong></div>
+
+            <div class="card-body">
+                <h1 class="h4 mb-1">{{ product.product_name }}</h1>
+                <p class="text-body-secondary small mb-3">
+                    #{{ product.id }} · {{ product.category_name }} ·
+                    {{ product.price|currency }} each
+                </p>
+
+                <div class="d-flex align-items-center gap-3">
+                    <span class="stat-value">{{ product.quantity }}</span>
+                    {{ stock_badge(product) }}
+                </div>
+
+                <p class="text-body-secondary small mt-2 mb-0">
+                    Alerts at or below {{ product.low_stock_threshold }} unit(s).
+                    {% if product.last_stock_change %}
+                    <br>Last change {{ product.last_stock_change|friendly_datetime }}.
+                    {% endif %}
+                </p>
+
+                <p class="small mt-2 mb-0">
+                    Stock value:
+                    <strong>{{ product.total_value|currency }}</strong>
+                </p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Record a stock change</strong></div>
+
+            <div class="card-body">
+                <form method="post" action="{{ url_for('product.stock', product_id=product.id) }}">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.direction.label(class_="form-label") }}
+                        {{ form.direction(class_="form-select is-invalid" if form.direction.errors
+                                          else "form-select") }}
+                        {{ field_errors(form.direction) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.amount.label(class_="form-label") }}
+                        {{ form.amount(class_="form-control qty-input is-invalid" if form.amount.errors
+                                       else "form-control qty-input",
+                                       min="1", step="1", inputmode="numeric") }}
+                        {{ field_errors(form.amount) }}
+                        <div class="form-text">Whole units, 1 or more.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.reason.label(class_="form-label") }}
+                        {{ form.reason(class_="form-select is-invalid" if form.reason.errors
+                                       else "form-select") }}
+                        {{ field_errors(form.reason) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.note.label(class_="form-label") }}
+                        {{ form.note(class_="form-control is-invalid" if form.note.errors
+                                     else "form-control",
+                                     placeholder="Optional — e.g. delivery note or supplier") }}
+                        {{ field_errors(form.note) }}
+                        <div class="form-text">Optional. Maximum 120 characters.</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        {{ form.submit(class_="btn btn-primary") }}
+                        <a class="btn btn-outline-secondary"
+                            href="{{ url_for('product.index') }}">Back to inventory</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# ------------------------------------------------------------------ #}
+    {# Audit trail                                                         #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <strong>Stock history</strong>
+                <span class="text-body-secondary small ms-2">
+                    {{ adjustments|length }} most recent change{{ 's' if adjustments|length != 1 else '' }}
+                </span>
+            </div>
+
+            <div class="card-body">
+                {% if adjustments %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">When</th>
+                                <th scope="col" class="text-end">Change</th>
+                                <th scope="col" class="text-end">After</th>
+                                <th scope="col">Reason</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for adjustment in adjustments %}
+                            <tr>
+                                <td class="text-nowrap small">
+                                    {{ adjustment.date_created|friendly_datetime }}
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    <span
+                                        class="{{ 'text-success' if adjustment.delta > 0 else 'text-danger' if adjustment.delta < 0 else 'text-body-secondary' }} fw-semibold">
+                                        {{ adjustment.delta|signed_delta }}
+                                    </span>
+                                </td>
+
+                                <td class="text-end text-nowrap stock-number">
+                                    {{ adjustment.quantity_after }}
+                                </td>
+
+                                <td>
+                                    <div>{{ adjustment.display_reason }}</div>
+                                    {% if adjustment.note %}
+                                    <div class="small text-body-secondary">{{ adjustment.note }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div class="empty-state text-center py-4">
+                    <div class="empty-state-icon" aria-hidden="true">🕓</div>
+                    <h2 class="h5 mt-3">No stock changes yet</h2>
+                    <p class="text-body-secondary mb-0">
+                        Every adjustment made from the form on the left is
+                        recorded here with its reason and timestamp.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_errors %}
+
+{% block title %}Categories · Inventory Management{% endblock %}
+
+
+{% block content %}
+<header class="mb-3">
+    <h1 class="h3 mb-1">Categories</h1>
+    <p class="text-body-secondary mb-0">
+        Group your products so the dashboard and the filters stay useful.
+        Category names are unique per account.
+    </p>
+</header>
+
+<div class="row g-4">
+
+    {# ------------------------------------------------------------------ #}
+    {# Add a category                                                      #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <strong>Add a category</strong>
+            </div>
+
+            <div class="card-body">
+                <form method="post" action="{{ url_for('categories.index') }}">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.name.label(class_="form-label") }}
+                        {{ form.name(class_="form-control is-invalid" if form.name.errors
+                                     else "form-control",
+                                     placeholder="e.g. Beverages",
+                                     autocomplete="off") }}
+                        {{ field_errors(form.name) }}
+                        <div class="form-text">Between 1 and 50 characters.</div>
+                    </div>
+
+                    <div class="d-grid">
+                        {{ form.submit(class_="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# ------------------------------------------------------------------ #}
+    {# Existing categories                                                 #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <strong>Your categories</strong>
+                <span class="text-body-secondary small ms-2">
+                    {{ categories|length }} total
+                </span>
+            </div>
+
+            <div class="card-body">
+                {% if categories %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col" class="text-end">Products</th>
+                                <th scope="col">Created</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for category in categories %}
+                            <tr>
+                                <td class="fw-semibold">{{ category.name }}</td>
+
+                                <td class="text-end">
+                                    <a class="text-decoration-none"
+                                        href="{{ url_for('product.index', category=category.id) }}">
+                                        {{ category.product_count }}
+                                        product{{ 's' if category.product_count != 1 else '' }}
+                                    </a>
+                                </td>
+
+                                <td class="text-nowrap small text-body-secondary">
+                                    {{ category.date_created|friendly_date }}
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    <form method="post"
+                                        action="{{ url_for('categories.delete', category_id=category.id) }}"
+                                        class="d-inline"
+                                        data-confirm="Delete “{{ category.name }}”? Its {{ category.product_count }} product(s) will stay in your inventory but become uncategorised.">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div class="empty-state text-center py-4">
+                    <div class="empty-state-icon" aria-hidden="true">🏷</div>
+                    <h2 class="h5 mt-3">No categories yet</h2>
+                    <p class="text-body-secondary mb-0">
+                        Create one with the form on the left, then pick it while
+                        adding or editing a product.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

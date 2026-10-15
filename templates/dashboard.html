@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stock_badge %}
+
+{% block title %}Dashboard · Inventory Management{% endblock %}
+{% block og_title %}Dashboard · Inventory Management{% endblock %}
+
+
+{% block content %}
+<header class="mb-4">
+    <h1 class="h3 mb-1">Dashboard</h1>
+    <p class="text-body-secondary mb-0">
+        Welcome back, {{ current_user.display_name }} — here is how your
+        inventory looks right now.
+    </p>
+</header>
+
+{# ---------------------------------------------------------------------- #}
+{# Headline numbers                                                        #}
+{# ---------------------------------------------------------------------- #}
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card h-100">
+            <div class="card-body">
+                <div class="stat-label">Products</div>
+                <div class="stat-value">{{ stats.product_count }}</div>
+                <div class="stat-hint">
+                    in {{ stats.category_count }} categor{{ 'y' if stats.category_count == 1 else 'ies' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-success h-100">
+            <div class="card-body">
+                <div class="stat-label">Inventory value</div>
+                <div class="stat-value">{{ stats.total_value|currency }}</div>
+                <div class="stat-hint">{{ stats.total_units }} unit(s) on hand</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-warning h-100">
+            <div class="card-body">
+                <div class="stat-label">Needs attention</div>
+                <div class="stat-value">{{ stats.low_stock_count }}</div>
+                <div class="stat-hint">at or below their alert level</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-danger h-100">
+            <div class="card-body">
+                <div class="stat-label">Out of stock</div>
+                <div class="stat-value">{{ stats.out_of_stock_count }}</div>
+                <div class="stat-hint">zero units on hand</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+{% if stats.product_count %}
+
+<div class="row g-4">
+
+    {# ------------------------------------------------------------------ #}
+    {# Units per category — pure CSS bars, no charting library              #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <strong>Stock by category</strong>
+                <span class="text-body-secondary small ms-2">units on hand</span>
+            </div>
+
+            <div class="card-body">
+                {% if stats.category_bars %}
+                <div class="bar-chart">
+                    {% for bar in stats.category_bars %}
+                    {% set width = (bar.units / stats.max_category_units * 100) if stats.max_category_units else 0 %}
+                    <div class="bar-row">
+                        <div class="bar-label small" title="{{ bar.name }}">{{ bar.name }}</div>
+
+                        <div class="bar-track" role="img"
+                            aria-label="{{ bar.name }}: {{ bar.units }} unit(s) on hand">
+                            <div class="bar-fill" style="width: {{ '%.1f'|format(width) }}%;"></div>
+                        </div>
+
+                        <div class="bar-value small text-body-secondary">
+                            {{ bar.units }} unit{{ 's' if bar.units != 1 else '' }} · {{ bar.value|currency }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-body-secondary mb-0">
+                    Nothing to chart yet.
+                    <a href="{{ url_for('categories.index') }}">Create a category</a>
+                    and assign products to it.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ------------------------------------------------------------------ #}
+    {# Recently added                                                       #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Recently added</strong>
+                <a class="btn btn-sm btn-outline-secondary"
+                    href="{{ url_for('product.index') }}">View all</a>
+            </div>
+
+            <div class="card-body">
+                {% if stats.recent_products %}
+                <ul class="list-unstyled mb-0">
+                    {% for product in stats.recent_products %}
+                    <li
+                        class="d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 {{ 'border-bottom' if not loop.last }}">
+                        <div>
+                            <a class="fw-semibold text-decoration-none"
+                                href="{{ url_for('product.stock', product_id=product.id) }}">
+                                {{ product.product_name }}
+                            </a>
+                            <div class="small text-body-secondary">
+                                added {{ product.date_created|friendly_date }} · {{ product.category_name }}
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <div class="fw-semibold">{{ product.price|currency }}</div>
+                            <div class="small">{{ product.quantity }} in stock</div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-body-secondary mb-0">No products yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ---------------------------------------------------------------------- #}
+{# Restocking list                                                         #}
+{# ---------------------------------------------------------------------- #}
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <strong>Restock soon</strong>
+            <span class="text-body-secondary small ms-2">
+                {{ stats.low_stock_count }} product{{ 's' if stats.low_stock_count != 1 else '' }}
+                at or below their alert level
+            </span>
+        </div>
+
+        <a class="btn btn-sm btn-outline-secondary"
+            href="{{ url_for('reports.index') }}">Open reports</a>
+    </div>
+
+    <div class="card-body">
+        {% if stats.low_stock_count %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Product</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end">In stock</th>
+                        <th scope="col" class="text-end">Alert at</th>
+                        <th scope="col" class="text-end">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for product in low_stock %}
+                    <tr>
+                        <td class="fw-semibold">{{ product.product_name }}</td>
+                        <td class="small">{{ product.category_name }}</td>
+                        <td>{{ stock_badge(product) }}</td>
+                        <td class="text-end stock-number">{{ product.quantity }}</td>
+                        <td class="text-end text-body-secondary">{{ product.low_stock_threshold }}</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary"
+                                href="{{ url_for('product.stock', product_id=product.id) }}">
+                                Restock
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state text-center py-4">
+            <div class="empty-state-icon" aria-hidden="true">✅</div>
+            <h2 class="h5 mt-3">Everything is stocked</h2>
+            <p class="text-body-secondary mb-0">
+                No product is at or below its alert level.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% else %}
+
+{# ---------------------------------------------------------------------- #}
+{# First-run empty state                                                   #}
+{# ---------------------------------------------------------------------- #}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="empty-state text-center py-5">
+            <div class="empty-state-icon" aria-hidden="true">📦</div>
+            <h2 class="h5 mt-3">Your inventory is empty</h2>
+            <p class="text-body-secondary">
+                Add your first product and this page will show its value,
+                stock levels and recent activity.
+            </p>
+            <a class="btn btn-primary" href="{{ url_for('product.index') }}#add-product">
+                Add a product
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,23 +1,68 @@
 {% extends "base.html" %}
-{% from "_macros.html" import sort_header, pagination_nav %}
+{% from "_macros.html" import sort_header, pagination_nav, field_errors, stock_badge, filter_select %}
 
-{% block title %}Inventory · Product Inventory{% endblock %}
-{% block og_title %}Inventory · Product Inventory{% endblock %}
+{% block title %}Inventory · Inventory Management{% endblock %}
+{% block og_title %}Inventory · Inventory Management{% endblock %}
 
 
 {% block content %}
-{% set is_searching = q != '' %}
+{% set is_filtered = params.q != '' or params.stock != 'all' or params.category != 'all' %}
 {% set first_row = (pagination.page - 1) * pagination.per_page + 1 if products else 0 %}
 {% set last_row = first_row + products|length - 1 if products else 0 %}
 
-<header class="row align-items-end mb-4">
-    <div class="col">
+{% set stock_options = [('all', 'Any stock status'), ('in', 'In stock'), ('low', 'Needs attention'), ('out', 'Out of stock')] %}
+{% set category_arg = 'none' if params.category is none else params.category %}
+
+<header class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
         <h1 class="h3 mb-1">Inventory</h1>
         <p class="text-body-secondary mb-0">
-            {{ total_products }} product{{ '' if total_products == 1 else 's' }} in the database
+            {{ total_products }} product{{ '' if total_products == 1 else 's' }} in your inventory
         </p>
     </div>
+
+    <a class="btn btn-sm btn-outline-success"
+        href="{{ url_for('reports.export_csv', q=params.q, category=category_arg, stock=params.stock,
+                          sort=params.sort, dir=params.direction) }}">
+        ⬇ Export CSV
+    </a>
 </header>
+
+{# ---------------------------------------------------------------------- #}
+{# Filters — a plain GET form, so it works without JavaScript              #}
+{# ---------------------------------------------------------------------- #}
+<form method="get" class="card card-body shadow-sm mb-4" aria-label="Filter products">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-lg-4">
+            {{ filter_select('category', 'Filter by category', category_options, params.category) }}
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-4">
+            {{ filter_select('stock', 'Filter by stock status', stock_options, params.stock) }}
+        </div>
+
+        {# Search and sort survive filtering. #}
+        <input type="hidden" name="q" value="{{ params.q }}">
+        <input type="hidden" name="sort" value="{{ params.sort }}">
+        <input type="hidden" name="dir" value="{{ params.direction }}">
+
+        <div class="col-auto">
+            <button class="btn btn-sm btn-primary" type="submit">Apply filters</button>
+        </div>
+
+        {% if is_filtered %}
+        <div class="col-auto">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('product.index') }}">Clear filters</a>
+        </div>
+        {% endif %}
+
+        <div class="col-auto ms-auto">
+            <span class="text-body-secondary small">
+                {{ pagination.total }} matching product{{ 's' if pagination.total != 1 else '' }}
+            </span>
+        </div>
+    </div>
+</form>
 
 
 <div class="row g-4">
@@ -26,7 +71,7 @@
     {# Add product                                                         #}
     {# ------------------------------------------------------------------ #}
     <div class="col-lg-4">
-        <div class="card shadow-sm sticky-lg-top" id="add-product" style="top: 5.5rem;">
+        <div class="card shadow-sm sticky-lg-top" id="add-product" style="top: 1rem;">
             <div class="card-header bg-white">
                 <strong>Add a new product</strong>
             </div>
@@ -41,23 +86,48 @@
                                              else "form-control",
                                              placeholder="e.g. Chocolate biscuit",
                                              autocomplete="off") }}
-                        {% for error in form.product_name.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
+                        {{ field_errors(form.product_name) }}
                         <div class="form-text">Enter the name of the product.</div>
                     </div>
 
-                    <div class="mb-3">
-                        {{ form.price.label(class_="form-label") }}
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            {{ form.price(class_="form-control is-invalid" if form.price.errors
-                                          else "form-control",
-                                          placeholder="0.00", step="0.01", min="0") }}
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            {{ form.price.label(class_="form-label") }}
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">$</span>
+                                {{ form.price(class_="form-control is-invalid" if form.price.errors
+                                              else "form-control",
+                                              placeholder="0.00", step="0.01", min="0") }}
+                            </div>
+                            {{ field_errors(form.price) }}
                         </div>
-                        {% for error in form.price.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                        {% endfor %}
+
+                        <div class="col-6 mb-3">
+                            {{ form.quantity.label(class_="form-label") }}
+                            {{ form.quantity(class_="form-control is-invalid" if form.quantity.errors
+                                             else "form-control",
+                                             min="0", placeholder="0") }}
+                            {{ field_errors(form.quantity) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            {{ form.low_stock_threshold.label(class_="form-label") }}
+                            {{ form.low_stock_threshold(class_="form-control is-invalid"
+                                                        if form.low_stock_threshold.errors
+                                                        else "form-control",
+                                                        min="0", placeholder="10") }}
+                            {{ field_errors(form.low_stock_threshold) }}
+                            <div class="form-text">Alert at or below this level.</div>
+                        </div>
+
+                        <div class="col-6 mb-3">
+                            {{ form.category_id.label(class_="form-label") }}
+                            {{ form.category_id(class_="form-select is-invalid" if form.category_id.errors
+                                                else "form-select") }}
+                            {{ field_errors(form.category_id) }}
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -67,9 +137,7 @@
                                                     else "form-control",
                                                     rows="3",
                                                     placeholder="Optional — up to 200 characters") }}
-                        {% for error in form.product_description.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
+                        {{ field_errors(form.product_description) }}
                         <div class="form-text">Optional. Maximum 200 characters.</div>
                     </div>
 
@@ -89,17 +157,17 @@
             <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div>
                     <strong>Products</strong>
-                    {% if is_searching %}
+                    {% if params.q != '' %}
                     <span class="text-body-secondary small ms-2">
                         {{ pagination.total }} result{{ 's' if pagination.total != 1 else '' }}
-                        for “{{ q }}”
+                        for “{{ params.q }}”
                     </span>
                     {% endif %}
                 </div>
 
-                {% if is_searching %}
+                {% if is_filtered %}
                 <a class="btn btn-sm btn-outline-secondary"
-                    href="{{ url_for('product.index', sort=sort, dir=direction) }}">
+                    href="{{ url_for('product.index', sort=params.sort, dir=params.direction) }}">
                     Clear search
                 </a>
                 {% endif %}
@@ -112,11 +180,12 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th scope="col" style="width: 3.5rem;">{{ sort_header('id', '#') }}</th>
-                                <th scope="col">{{ sort_header('product_name', 'Product') }}</th>
-                                <th scope="col" class="text-end">{{ sort_header('price', 'Price') }}</th>
-                                <th scope="col">Description</th>
-                                <th scope="col">{{ sort_header('date_created', 'Created') }}</th>
+                                <th scope="col" style="width: 3.5rem;">{{ sort_header('id', '#', params) }}</th>
+                                <th scope="col">{{ sort_header('product_name', 'Product', params) }}</th>
+                                <th scope="col">Category</th>
+                                <th scope="col" class="text-end">{{ sort_header('price', 'Price', params) }}</th>
+                                <th scope="col">{{ sort_header('quantity', 'Stock', params) }}</th>
+                                <th scope="col">{{ sort_header('date_created', 'Created', params) }}</th>
                                 <th scope="col" class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -128,15 +197,36 @@
                                     {{ product.id }}
                                 </th>
 
-                                <td class="fw-semibold">{{ product.product_name }}</td>
+                                <td>
+                                    <div class="fw-semibold">{{ product.product_name }}</div>
+                                    <div class="small text-body-secondary description-cell"
+                                        title="{{ product.product_description or '' }}">
+                                        {{ product.display_description }}
+                                    </div>
+                                </td>
+
+                                <td class="text-nowrap small">
+                                    {% if product.category %}
+                                    {{ product.category.name }}
+                                    {% else %}
+                                    <span class="text-body-secondary">—</span>
+                                    {% endif %}
+                                </td>
 
                                 <td class="text-end text-nowrap">
                                     {{ product.price|currency }}
                                 </td>
 
-                                <td class="text-body-secondary description-cell"
-                                    title="{{ product.product_description or '' }}">
-                                    {{ product.display_description }}
+                                <td class="text-nowrap">
+                                    <a class="d-inline-flex align-items-center gap-2 text-decoration-none"
+                                        href="{{ url_for('product.stock', product_id=product.id) }}"
+                                        title="Adjust stock and see its history">
+                                        {{ stock_badge(product) }}
+                                        <span class="stock-number">{{ product.quantity }}</span>
+                                    </a>
+                                    <div class="small text-body-secondary">
+                                        alert ≤ {{ product.low_stock_threshold }}
+                                    </div>
                                 </td>
 
                                 <td class="text-nowrap">
@@ -146,6 +236,11 @@
                                 </td>
 
                                 <td class="text-end text-nowrap">
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                        href="{{ url_for('product.stock', product_id=product.id) }}">
+                                        Stock
+                                    </a>
+
                                     <a class="btn btn-sm btn-outline-primary"
                                         href="{{ url_for('product.edit', product_id=product.id) }}">
                                         Edit
@@ -171,14 +266,20 @@
                     <small class="text-body-secondary">
                         Showing {{ first_row }}–{{ last_row }} of {{ pagination.total }}
                     </small>
-                    {{ pagination_nav(pagination, q, sort, direction) }}
+                    {{ pagination_nav(pagination, params) }}
                 </div>
 
-                {% elif is_searching %}
+                {% elif is_filtered %}
                 <div class="empty-state text-center py-5">
                     <div class="empty-state-icon" aria-hidden="true">🔍</div>
-                    <h2 class="h5 mt-3">No products match “{{ q }}”</h2>
-                    <p class="text-body-secondary">Try a different word, or clear the search.</p>
+                    <h2 class="h5 mt-3">No products match your filters</h2>
+                    <p class="text-body-secondary">
+                        {% if params.q != '' %}
+                        Nothing matches “{{ params.q }}” with the selected category and stock status.
+                        {% else %}
+                        No product has that category or stock status.
+                        {% endif %}
+                    </p>
                     <a class="btn btn-outline-secondary"
                         href="{{ url_for('product.index') }}">Clear search</a>
                 </div>

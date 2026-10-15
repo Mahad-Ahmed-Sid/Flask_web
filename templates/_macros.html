@@ -1,24 +1,29 @@
 {#
-  Reusable Jinja macros for the product table.
+  Reusable Jinja macros.
 
-  sort_header  – a column header that toggles ?sort= / ?dir= and keeps ?q=
-  pagination_nav – Bootstrap pagination that keeps ?q= / ?sort= / ?dir=
+  sort_header    – column header that toggles ?sort= / ?dir= and keeps the
+                   active search/filter state
+  pagination_nav – Bootstrap pagination that keeps every active parameter
+  field_errors   – inline validation messages for one field
+  stock_badge    – coloured "In stock / Low stock / Out of stock" badge
+  filter_select  – labelled <select> used by the list filter form
 #}
 
 
-{% macro sort_header(column, label) %}
-{% if sort == column %}
-{% set next_direction = 'asc' if direction == 'desc' else 'desc' %}
-{% set indicator = '▲' if direction == 'asc' else '▼' %}
-{% set state = 'ascending' if direction == 'asc' else 'descending' %}
+{% macro sort_header(column, label, params) %}
+{% if params.sort == column %}
+{% set next_direction = 'asc' if params.direction == 'desc' else 'desc' %}
+{% set indicator = '▲' if params.direction == 'asc' else '▼' %}
+{% set state = 'ascending' if params.direction == 'asc' else 'descending' %}
 {% set aria = 'Sorted by ' ~ label ~ ' (' ~ state ~ '). Activate to reverse the order.' %}
 {% else %}
 {% set next_direction = 'asc' %}
 {% set indicator = '' %}
 {% set aria = 'Sort by ' ~ label %}
 {% endif %}
-<a class="sort-link {{ 'is-sorted' if sort == column }}"
-    href="{{ url_for('product.index', q=q, sort=column, dir=next_direction, page=1) }}"
+<a class="sort-link {{ 'is-sorted' if params.sort == column }}"
+    href="{{ url_for('product.index', q=params.q, sort=column, dir=next_direction,
+                      category=params.category, stock=params.stock, page=1) }}"
     aria-label="{{ aria }}">
     {{ label }}
     <span class="sort-indicator" aria-hidden="true">{{ indicator }}</span>
@@ -26,16 +31,19 @@
 {% endmacro %}
 
 
-{% macro pagination_nav(pagination, q, sort, direction) %}
+{% macro pagination_nav(pagination, params) %}
 {% if pagination.pages > 1 %}
 {% set window = pagination.iter_pages(left_edge=1, left_current=2, right_current=3, right_edge=1) %}
+{# url_for turns None into an empty value, which parse_list_params() reads as "all" #}
+{% set category_arg = 'none' if params.category is none else params.category %}
 
 <nav class="mt-3" aria-label="Product list pages">
     <ul class="pagination justify-content-center mb-0">
 
         <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
             <a class="page-link"
-                href="{{ url_for('product.index', q=q, sort=sort, dir=direction, page=pagination.prev_num) }}"
+                href="{{ url_for('product.index', q=params.q, sort=params.sort, dir=params.direction,
+                                  category=category_arg, stock=params.stock, page=pagination.prev_num) }}"
                 {{ 'aria-disabled=true' if not pagination.has_prev }} rel="prev">
                 &laquo; Previous
             </a>
@@ -45,7 +53,8 @@
         {% if page %}
         <li class="page-item {{ 'active' if page == pagination.page }}">
             <a class="page-link"
-                href="{{ url_for('product.index', q=q, sort=sort, dir=direction, page=page) }}"
+                href="{{ url_for('product.index', q=params.q, sort=params.sort, dir=params.direction,
+                                  category=category_arg, stock=params.stock, page=page) }}"
                 {{ 'aria-current=page' if page == pagination.page }}>
                 {{ page }}
             </a>
@@ -57,7 +66,8 @@
 
         <li class="page-item {{ 'disabled' if not pagination.has_next }}">
             <a class="page-link"
-                href="{{ url_for('product.index', q=q, sort=sort, dir=direction, page=pagination.next_num) }}"
+                href="{{ url_for('product.index', q=params.q, sort=params.sort, dir=params.direction,
+                                  category=category_arg, stock=params.stock, page=pagination.next_num) }}"
                 {{ 'aria-disabled=true' if not pagination.has_next }} rel="next">
                 Next &raquo;
             </a>
@@ -66,4 +76,35 @@
     </ul>
 </nav>
 {% endif %}
+{% endmacro %}
+
+
+{% macro field_errors(field) %}
+{% if field.errors %}
+{% for error in field.errors %}
+<div class="invalid-feedback d-block">{{ error }}</div>
+{% endfor %}
+{% endif %}
+{% endmacro %}
+
+
+{% macro stock_badge(product) %}
+{% if product.stock_status == 'out' %}
+<span class="badge text-bg-danger">Out of stock</span>
+{% elif product.stock_status == 'low' %}
+<span class="badge text-bg-warning">Low stock</span>
+{% else %}
+<span class="badge text-bg-success">In stock</span>
+{% endif %}
+{% endmacro %}
+
+
+{% macro filter_select(name, label, options, selected) %}
+<label class="visually-hidden" for="filter-{{ name }}">{{ label }}</label>
+<select class="form-select form-select-sm" id="filter-{{ name }}" name="{{ name }}">
+    {% for value, text in options %}
+    <option value="{{ value }}" {{ 'selected' if selected is not none and value|string == selected|string }}>{{ text }}
+    </option>
+    {% endfor %}
+</select>
 {% endmacro %}

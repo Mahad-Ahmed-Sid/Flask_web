@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stock_badge %}
+
+{% block title %}Reports · Inventory Management{% endblock %}
+
+
+{% block content %}
+<header class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h1 class="h3 mb-1">Reports</h1>
+        <p class="text-body-secondary mb-0">
+            What your inventory is worth, and what needs restocking.
+        </p>
+    </div>
+
+    <a class="btn btn-sm btn-outline-success"
+        href="{{ url_for('reports.export_csv') }}">
+        ⬇ Export all products to CSV
+    </a>
+</header>
+
+{# ---------------------------------------------------------------------- #}
+{# Summary                                                                 #}
+{# ---------------------------------------------------------------------- #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-success h-100">
+            <div class="card-body">
+                <div class="stat-label">Total value</div>
+                <div class="stat-value">{{ stats.total_value|currency }}</div>
+                <div class="stat-hint">at unit price × quantity</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card h-100">
+            <div class="card-body">
+                <div class="stat-label">Units on hand</div>
+                <div class="stat-value">{{ stats.total_units }}</div>
+                <div class="stat-hint">across {{ stats.product_count }} product(s)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-warning h-100">
+            <div class="card-body">
+                <div class="stat-label">Low stock</div>
+                <div class="stat-value">{{ stats.low_stock_count }}</div>
+                <div class="stat-hint">at or below the alert level</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-danger h-100">
+            <div class="card-body">
+                <div class="stat-label">Out of stock</div>
+                <div class="stat-value">{{ stats.out_of_stock_count }}</div>
+                <div class="stat-hint">zero units on hand</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row g-4">
+
+    {# ------------------------------------------------------------------ #}
+    {# Valuation                                                           #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <strong>Inventory valuation</strong>
+                <span class="text-body-secondary small ms-2">
+                    most valuable {{ valuation|length }} of {{ stats.product_count }}
+                </span>
+            </div>
+
+            <div class="card-body">
+                {% if valuation %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Product</th>
+                                <th scope="col" class="text-end">Unit price</th>
+                                <th scope="col" class="text-end">Qty</th>
+                                <th scope="col" class="text-end">Value</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for product in valuation %}
+                            <tr>
+                                <td>
+                                    <a class="text-decoration-none fw-semibold"
+                                        href="{{ url_for('product.stock', product_id=product.id) }}">
+                                        {{ product.product_name }}
+                                    </a>
+                                    <div class="small text-body-secondary">{{ product.category_name }}</div>
+                                </td>
+                                <td class="text-end text-nowrap">{{ product.price|currency }}</td>
+                                <td class="text-end stock-number">{{ product.quantity }}</td>
+                                <td class="text-end text-nowrap fw-semibold">{{ product.total_value|currency }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+
+                        <tfoot>
+                            <tr class="table-light fw-semibold">
+                                <td>All {{ stats.product_count }} product(s)</td>
+                                <td class="text-end">—</td>
+                                <td class="text-end">{{ stats.total_units }}</td>
+                                <td class="text-end">{{ stats.total_value|currency }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state text-center py-4">
+                    <div class="empty-state-icon" aria-hidden="true">🧾</div>
+                    <h2 class="h5 mt-3">Nothing to value yet</h2>
+                    <p class="text-body-secondary mb-0">
+                        Add products and this report totals their value at unit
+                        price × quantity.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ------------------------------------------------------------------ #}
+    {# Low stock                                                           #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <strong>Low-stock report</strong>
+                <span class="text-body-secondary small ms-2">
+                    {{ low_stock|length }} need{{ '' if low_stock|length == 1 else '' }} restocking
+                </span>
+            </div>
+
+            <div class="card-body">
+                {% if low_stock %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Product</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" class="text-end">In stock</th>
+                                <th scope="col" class="text-end">Alert at</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for product in low_stock %}
+                            <tr>
+                                <td>
+                                    <a class="text-decoration-none fw-semibold"
+                                        href="{{ url_for('product.stock', product_id=product.id) }}">
+                                        {{ product.product_name }}
+                                    </a>
+                                </td>
+                                <td class="small">{{ stock_labels[product.stock_status] }}</td>
+                                <td class="text-end stock-number">{{ product.quantity }}</td>
+                                <td class="text-end text-body-secondary">{{ product.low_stock_threshold }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="small text-body-secondary mt-3 mb-0">
+                    Out-of-stock products are listed first — order by the
+                    "In stock" column to see the worst cases at the top.
+                </p>
+                {% else %}
+                <div class="empty-state text-center py-4">
+                    <div class="empty-state-icon" aria-hidden="true">✅</div>
+                    <h2 class="h5 mt-3">Nothing is low</h2>
+                    <p class="text-body-secondary mb-0">
+                        Every product is above its alert level.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ---------------------------------------------------------------------- #}
+{# Recent stock movements                                                 #}
+{# ---------------------------------------------------------------------- #}
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-white">
+        <strong>Recent stock changes</strong>
+        <span class="text-body-secondary small ms-2">last {{ adjustments|length }}</span>
+    </div>
+
+    <div class="card-body">
+        {% if adjustments %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">When</th>
+                        <th scope="col">Product</th>
+                        <th scope="col" class="text-end">Change</th>
+                        <th scope="col" class="text-end">After</th>
+                        <th scope="col">Reason</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for adjustment in adjustments %}
+                    <tr>
+                        <td class="text-nowrap small">{{ adjustment.date_created|friendly_datetime }}</td>
+                        <td>{{ adjustment.product.product_name if adjustment.product else '—' }}</td>
+                        <td class="text-end text-nowrap">
+                            <span
+                                class="{{ 'text-success' if adjustment.delta > 0 else 'text-danger' if adjustment.delta < 0 else 'text-body-secondary' }} fw-semibold">
+                                {{ adjustment.delta|signed_delta }}
+                            </span>
+                        </td>
+                        <td class="text-end stock-number">{{ adjustment.quantity_after }}</td>
+                        <td class="small">
+                            {{ adjustment.display_reason }}
+                            {% if adjustment.note %}
+                            <span class="text-body-secondary">— {{ adjustment.note }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state text-center py-4">
+            <div class="empty-state-icon" aria-hidden="true">🕓</div>
+            <h2 class="h5 mt-3">No stock changes recorded</h2>
+            <p class="text-body-secondary mb-0">
+                Adjust a product's stock and the change appears here with its
+                reason and timestamp.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

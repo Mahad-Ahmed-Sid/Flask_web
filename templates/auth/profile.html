@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_errors %}
+
+{% block title %}Profile · Inventory Management{% endblock %}
+
+
+{% block content %}
+<header class="mb-3">
+    <h1 class="h3 mb-1">Profile</h1>
+    <p class="text-body-secondary mb-0">
+        Your name and email as they appear across the app.
+    </p>
+</header>
+
+<div class="row g-4">
+
+    {# ------------------------------------------------------------------ #}
+    {# Editable details                                                    #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Account details</strong></div>
+
+            <div class="card-body">
+                <form method="post" action="{{ url_for('auth.profile') }}">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.display_name.label(class_="form-label") }}
+                        {{ form.display_name(class_="form-control is-invalid" if form.display_name.errors
+                                             else "form-control",
+                                             autocomplete="name") }}
+                        {{ field_errors(form.display_name) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.email.label(class_="form-label") }}
+                        {{ form.email(class_="form-control is-invalid" if form.email.errors
+                                      else "form-control",
+                                      type="email",
+                                      autocomplete="email") }}
+                        {{ field_errors(form.email) }}
+                        <div class="form-text">Must be unique.</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        {{ form.submit(class_="btn btn-primary") }}
+                        <a class="btn btn-outline-secondary"
+                            href="{{ url_for('auth.change_password') }}">Change password</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# ------------------------------------------------------------------ #}
+    {# Read-only summary                                                   #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Inventory ownership</strong></div>
+
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Signed in as</dt>
+                    <dd class="col-sm-7">{{ current_user.display_name }}</dd>
+
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Email</dt>
+                    <dd class="col-sm-7 text-break">{{ current_user.email }}</dd>
+
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Member since</dt>
+                    <dd class="col-sm-7">{{ current_user.date_created|friendly_date }}</dd>
+
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Products</dt>
+                    <dd class="col-sm-7">{{ current_user.product_count }}</dd>
+
+                    <dt class="col-sm-5 text-body-secondary fw-normal">Categories</dt>
+                    <dd class="col-sm-7 mb-0">{{ category_count }}</dd>
+                </dl>
+
+                <hr>
+
+                <p class="small text-body-secondary mb-0">
+                    Products, categories and stock history belong to this
+                    account only. Signing out does not delete anything.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
