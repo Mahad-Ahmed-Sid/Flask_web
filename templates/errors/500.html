@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Something went wrong · Product Inventory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7 text-center py-5">
+        <p class="display-4 text-body-secondary mb-0">500</p>
+        <h1 class="h3 mt-3">Something went wrong</h1>
+        <p class="text-body-secondary">
+            The server hit an unexpected error while handling this request.
+            The details have been logged — please try again in a moment.
+        </p>
+        <a class="btn btn-primary" href="{{ url_for('product.index') }}">
+            Back to inventory
+        </a>
+    </div>
+</div>
+{% endblock %}

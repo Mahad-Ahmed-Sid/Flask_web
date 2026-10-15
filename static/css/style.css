@@ -1,0 +1,114 @@
+/* ------------------------------------------------------------------ *
+ * Product Inventory — small overrides on top of Bootstrap 5
+ * ------------------------------------------------------------------ */
+
+:root {
+    --pi-brand: #4f46e5;
+    --pi-muted: #6c757d;
+}
+
+body {
+    font-size: 0.95rem;
+}
+
+/* --- Brand --------------------------------------------------------- */
+
+.brand-mark {
+    color: var(--pi-brand);
+}
+
+.navbar-brand:hover .brand-mark {
+    color: var(--pi-brand);
+    filter: brightness(1.2);
+}
+
+/* --- Sortable table headers --------------------------------------- */
+
+.sort-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: inherit;
+    text-decoration: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.25rem;
+    margin: -0.1rem -0.25rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+
+.sort-link:hover,
+.sort-link:focus-visible {
+    color: var(--pi-brand);
+    background-color: rgba(79, 70, 229, 0.08);
+    text-decoration: none;
+}
+
+.sort-link.is-sorted {
+    color: var(--pi-brand);
+}
+
+.sort-indicator {
+    font-size: 0.65rem;
+    line-height: 1;
+}
+
+/* --- Table cells ---------------------------------------------------- */
+
+.description-cell {
+    max-width: 18rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.7rem 0.75rem;
+}
+
+/* --- Empty states ---------------------------------------------------- */
+
+.empty-state-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    opacity: 0.7;
+}
+
+/* --- Cards ------------------------------------------------------------ */
+
+.card {
+    border-color: rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    border-bottom-color: rgba(0, 0, 0, 0.075);
+}
+
+/* --- Forms ------------------------------------------------------------- */
+
+.form-control:focus,
+.input-group-text {
+    border-color: color-mix(in srgb, var(--pi-brand) 45%, #ced4da);
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+}
+
+/* --- Accessibility ------------------------------------------------------ */
+
+:focus-visible {
+    outline: 2px solid var(--pi-brand);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}

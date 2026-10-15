@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% from "_macros.html" import sort_header, pagination_nav %}
+
+{% block title %}Inventory · Product Inventory{% endblock %}
+{% block og_title %}Inventory · Product Inventory{% endblock %}
+
+
+{% block content %}
+{% set is_searching = q != '' %}
+{% set first_row = (pagination.page - 1) * pagination.per_page + 1 if products else 0 %}
+{% set last_row = first_row + products|length - 1 if products else 0 %}
+
+<header class="row align-items-end mb-4">
+    <div class="col">
+        <h1 class="h3 mb-1">Inventory</h1>
+        <p class="text-body-secondary mb-0">
+            {{ total_products }} product{{ '' if total_products == 1 else 's' }} in the database
+        </p>
+    </div>
+</header>
+
+
+<div class="row g-4">
+
+    {# ------------------------------------------------------------------ #}
+    {# Add product                                                         #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-4">
+        <div class="card shadow-sm sticky-lg-top" id="add-product" style="top: 5.5rem;">
+            <div class="card-header bg-white">
+                <strong>Add a new product</strong>
+            </div>
+
+            <div class="card-body">
+                <form method="post" action="{{ url_for('product.index') }}">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.product_name.label(class_="form-label") }}
+                        {{ form.product_name(class_="form-control is-invalid" if form.product_name.errors
+                                             else "form-control",
+                                             placeholder="e.g. Chocolate biscuit",
+                                             autocomplete="off") }}
+                        {% for error in form.product_name.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Enter the name of the product.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.price.label(class_="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            {{ form.price(class_="form-control is-invalid" if form.price.errors
+                                          else "form-control",
+                                          placeholder="0.00", step="0.01", min="0") }}
+                        </div>
+                        {% for error in form.price.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.product_description.label(class_="form-label") }}
+                        {{ form.product_description(class_="form-control is-invalid"
+                                                    if form.product_description.errors
+                                                    else "form-control",
+                                                    rows="3",
+                                                    placeholder="Optional — up to 200 characters") }}
+                        {% for error in form.product_description.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Optional. Maximum 200 characters.</div>
+                    </div>
+
+                    <div class="d-grid">
+                        {{ form.submit(class_="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# ------------------------------------------------------------------ #}
+    {# Product list                                                        #}
+    {# ------------------------------------------------------------------ #}
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <strong>Products</strong>
+                    {% if is_searching %}
+                    <span class="text-body-secondary small ms-2">
+                        {{ pagination.total }} result{{ 's' if pagination.total != 1 else '' }}
+                        for “{{ q }}”
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if is_searching %}
+                <a class="btn btn-sm btn-outline-secondary"
+                    href="{{ url_for('product.index', sort=sort, dir=direction) }}">
+                    Clear search
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="card-body">
+                {% if products %}
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" style="width: 3.5rem;">{{ sort_header('id', '#') }}</th>
+                                <th scope="col">{{ sort_header('product_name', 'Product') }}</th>
+                                <th scope="col" class="text-end">{{ sort_header('price', 'Price') }}</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">{{ sort_header('date_created', 'Created') }}</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <th scope="row" class="text-body-secondary fw-normal">
+                                    {{ product.id }}
+                                </th>
+
+                                <td class="fw-semibold">{{ product.product_name }}</td>
+
+                                <td class="text-end text-nowrap">
+                                    {{ product.price|currency }}
+                                </td>
+
+                                <td class="text-body-secondary description-cell"
+                                    title="{{ product.product_description or '' }}">
+                                    {{ product.display_description }}
+                                </td>
+
+                                <td class="text-nowrap">
+                                    <span title="{{ product.date_created }}">
+                                        {{ product.date_created|friendly_date }}
+                                    </span>
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                        href="{{ url_for('product.edit', product_id=product.id) }}">
+                                        Edit
+                                    </a>
+
+                                    <form method="post"
+                                        action="{{ url_for('product.delete', product_id=product.id) }}"
+                                        class="d-inline"
+                                        data-confirm="Delete “{{ product.product_name }}” permanently? This cannot be undone.">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                    <small class="text-body-secondary">
+                        Showing {{ first_row }}–{{ last_row }} of {{ pagination.total }}
+                    </small>
+                    {{ pagination_nav(pagination, q, sort, direction) }}
+                </div>
+
+                {% elif is_searching %}
+                <div class="empty-state text-center py-5">
+                    <div class="empty-state-icon" aria-hidden="true">🔍</div>
+                    <h2 class="h5 mt-3">No products match “{{ q }}”</h2>
+                    <p class="text-body-secondary">Try a different word, or clear the search.</p>
+                    <a class="btn btn-outline-secondary"
+                        href="{{ url_for('product.index') }}">Clear search</a>
+                </div>
+
+                {% else %}
+                <div class="empty-state text-center py-5">
+                    <div class="empty-state-icon" aria-hidden="true">📦</div>
+                    <h2 class="h5 mt-3">No products yet</h2>
+                    <p class="text-body-secondary">
+                        Add your first product using the form on the left.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

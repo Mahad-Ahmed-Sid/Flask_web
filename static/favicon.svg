@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Product Inventory">
+  <rect width="32" height="32" rx="7" fill="#4f46e5"/>
+  <path d="M7 11.5A1.5 1.5 0 0 1 8.5 10h15A1.5 1.5 0 0 1 25 11.5v9A1.5 1.5 0 0 1 23.5 22h-15a1.5 1.5 0 0 1-1.5-1.5v-9Z" fill="#ffffff" fill-opacity="0.92"/>
+  <path d="M7 14.5h18" stroke="#4f46e5" stroke-width="1.6"/>
+  <path d="M12.5 10v12" stroke="#4f46e5" stroke-width="1.6"/>
+</svg>

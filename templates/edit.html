@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ product.product_name }} · Product Inventory{% endblock %}
+
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('product.index') }}">Inventory</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    Edit #{{ product.id }}
+                </li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <strong>Edit product #{{ product.id }}</strong>
+                <span class="text-body-secondary small ms-2">
+                    created {{ product.date_created|friendly_date }}
+                </span>
+            </div>
+
+            <div class="card-body">
+                <form method="post" action="{{ url_for('product.edit', product_id=product.id) }}">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.product_name.label(class_="form-label") }}
+                        {{ form.product_name(class_="form-control is-invalid" if form.product_name.errors
+                                             else "form-control",
+                                             autocomplete="off") }}
+                        {% for error in form.product_name.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Enter the name of the product.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.price.label(class_="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            {{ form.price(class_="form-control is-invalid" if form.price.errors
+                                          else "form-control",
+                                          step="0.01", min="0") }}
+                        </div>
+                        {% for error in form.price.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.product_description.label(class_="form-label") }}
+                        {{ form.product_description(class_="form-control is-invalid"
+                                                    if form.product_description.errors
+                                                    else "form-control",
+                                                    rows="4") }}
+                        {% for error in form.product_description.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Optional. Maximum 200 characters.</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        {{ form.submit(class_="btn btn-primary", value="Save changes") }}
+                        <a class="btn btn-outline-secondary"
+                            href="{{ url_for('product.index') }}">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Form expired · Product Inventory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7 text-center py-5">
+        <p class="display-4 text-body-secondary mb-0">400</p>
+        <h1 class="h3 mt-3">That form has expired</h1>
+        <p class="text-body-secondary">
+            {{ description|default("For security reasons the form you submitted is no "
+                                  "longer valid.", true) }}
+            Nothing was saved — please go back and try again.
+        </p>
+        <a class="btn btn-primary" href="{{ url_for('product.index') }}">
+            Back to inventory
+        </a>
+    </div>
+</div>
+{% endblock %}

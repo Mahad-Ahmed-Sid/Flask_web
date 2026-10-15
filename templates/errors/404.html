@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Page not found · Product Inventory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7 text-center py-5">
+        <p class="display-4 text-body-secondary mb-0">404</p>
+        <h1 class="h3 mt-3">Page not found</h1>
+        <p class="text-body-secondary">
+            The page you are looking for does not exist — it may have been
+            deleted, or the link is out of date.
+        </p>
+        <a class="btn btn-primary" href="{{ url_for('product.index') }}">
+            Back to inventory
+        </a>
+    </div>
+</div>
+{% endblock %}
