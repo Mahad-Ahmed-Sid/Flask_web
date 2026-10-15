@@ -44,14 +44,18 @@
     <div class="app-shell">
 
         {# ---------------------------------------------------------------- #}
-        {# Sidebar: static at lg and up, offcanvas below                      #}
+        {# Sidebar: static at lg and up, slide-in below.  Note that a        #}
+        {# responsive offcanvas must NOT carry the base `.offcanvas` class: #}
+        {# Bootstrap's unscoped .offcanvas rule would keep it hidden at every#}
+        {# width (docs: "replace the .offcanvas base class with a variant").  #}
         {# ---------------------------------------------------------------- #}
-        <aside class="offcanvas offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" id="appSidebar"
+        <aside class="offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" id="appSidebar"
             aria-label="Main navigation">
 
             <div class="offcanvas-header d-lg-none">
                 <span class="fw-semibold"><span class="brand-mark" aria-hidden="true">▦</span> Inventory</span>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                    data-bs-target="#appSidebar" aria-label="Close"></button>
             </div>
 
             <div class="offcanvas-body d-flex flex-column p-0">
