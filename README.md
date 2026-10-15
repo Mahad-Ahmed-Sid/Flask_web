@@ -18,6 +18,21 @@ migrations, a test suite and CI.
 
 ---
 
+## Screenshots
+
+The inventory page — add form on the left, sortable product table on the right,
+with empty states and flash messages handled for you:
+
+![Inventory page](docs/inventory.png)
+
+Search narrows the list, shows a result count and offers a one-click
+"Clear search"; it composes with sorting and pagination
+(`/?q=juice&sort=price&dir=asc`):
+
+![Search results](docs/search-results.png)
+
+---
+
 ## Features
 
 **Core**
@@ -140,6 +155,7 @@ Flask2026/
 │   └── errors/             # 404, 500, expired-form
 │
 ├── static/                 # style.css, main.js, favicon.svg
+├── docs/                   # screenshots used in this README
 ├── migrations/             # Alembic revisions
 └── tests/                  # conftest + route/model tests
 ```
